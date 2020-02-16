@@ -103,3 +103,31 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE
+.vscode/
+.idea/
+
+# Data files
+data/database.db
+data/known_faces/
+data/screenshots/
+
+# Logs
+logs/
+
+# Config files (except default templates)
+config/camera_config.yaml
+config/.env
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+models/
