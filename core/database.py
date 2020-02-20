@@ -36,3 +36,50 @@ class FaceDatabase:
             
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                
+                # Create face_logs table
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS face_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp REAL NOT NULL,
+                        camera_id INTEGER NOT NULL,
+                        camera_name TEXT NOT NULL,
+                        face_name TEXT NOT NULL,
+                        age INTEGER,
+                        gender TEXT,
+                        confidence REAL NOT NULL,
+                        screenshot_path TEXT
+                    )
+                ''')
+                
+                # Create known_faces table
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS known_faces (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL UNIQUE,
+                        embedding BLOB NOT NULL,
+                        image_path TEXT NOT NULL,
+                        created_at REAL NOT NULL
+                    )
+                ''')
+                
+                conn.commit()
+                logger.success("Database initialized successfully")
+                
+        except Exception as e:
+            logger.error(f"Error initializing database: {e}")
+            raise
+
+    def log_face_event(self, event) -> int:
+        """Log a face recognition event to the database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO face_logs (
+                        timestamp, camera_id, camera_name, face_name,
+                        age, gender, confidence, screenshot_path
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    float(event.timestamp),
+                    int(event.camera_id),
