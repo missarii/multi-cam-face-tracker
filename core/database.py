@@ -83,3 +83,46 @@ class FaceDatabase:
                 ''', (
                     float(event.timestamp),
                     int(event.camera_id),
+                    str(event.camera_name),
+                    str(event.face_name),
+                    int(event.age) if event.age else None,
+                    str(event.gender) if event.gender else None,
+                    float(event.confidence),
+                    str(event.screenshot_path) if event.screenshot_path else None
+                ))
+                conn.commit()
+                return cursor.lastrowid
+                
+        except Exception as e:
+            logger.error(f"Error logging face event: {e}")
+            raise
+
+    def get_face_logs(self, limit: int = 100, 
+                 camera_id: Optional[int] = None,
+                 face_name: Optional[str] = None,
+                 start_time: Optional[float] = None,
+                 end_time: Optional[float] = None) -> List[FaceLogEntry]:
+        """Retrieve face logs with optional filters"""
+        try:
+            query = '''
+                SELECT id, timestamp, camera_id, camera_name, face_name, age, gender, confidence, screenshot_path
+                FROM face_logs
+            '''
+            params = []
+            conditions = []
+            
+            if camera_id is not None:
+                conditions.append("camera_id = ?")
+                params.append(camera_id)
+                
+            if face_name is not None:
+                conditions.append("face_name = ?")
+                params.append(face_name)
+                
+            if start_time is not None:
+                conditions.append("timestamp >= ?")
+                params.append(float(start_time))
+                
+            if end_time is not None:
+                conditions.append("timestamp <= ?")
+                params.append(float(end_time))
