@@ -126,3 +126,39 @@ class FaceDatabase:
             if end_time is not None:
                 conditions.append("timestamp <= ?")
                 params.append(float(end_time))
+                
+            if conditions:
+                query += " WHERE " + " AND ".join(conditions)
+                
+            query += " ORDER BY timestamp DESC LIMIT ?"
+            params.append(limit)
+            
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, params)
+                
+                entries = []
+                for row in cursor.fetchall():
+                    try:
+                        # Convert all values to proper types
+                        entries.append(FaceLogEntry(
+                            id=row['id'],
+                            timestamp=float(row['timestamp']),
+                            camera_id=row['camera_id'],
+                            camera_name=row['camera_name'],
+                            face_name=row['face_name'],
+                            age=row['age'],
+                            gender=row['gender'],
+                            confidence=float(row['confidence']),
+                            screenshot_path=row['screenshot_path']
+                        ))
+                    except Exception as e:
+                        logger.error(f"Error converting row {dict(row)}: {e}")
+                        continue
+                        
+                return entries
+                
+        except Exception as e:
+            logger.error(f"Error retrieving face logs: {e}")
+            return []
