@@ -72,3 +72,39 @@ class CameraManager:
                     fps=cam_config.get('fps', 30),
                     rotate=cam_config.get('rotate', 0)
                 )
+                
+            logger.info(f"Loaded {len(self.cameras)} camera configurations")
+            
+        except Exception as e:
+            logger.error(f"Error loading camera config: {e}")
+            raise
+
+    def start_all_cameras(self) -> None:
+        """Start all enabled cameras"""
+        self.stop_event.clear()
+        for cam_id, cam_config in self.cameras.items():
+            if cam_config.enabled:
+                self.start_camera(cam_id)
+                
+    def stop_all_cameras(self) -> None:
+        """Stop all camera threads"""
+        self.stop_event.set()
+        for thread in self.capture_threads.values():
+            thread.join(timeout=2)
+        self.capture_threads.clear()
+        self.frame_queues.clear()
+        logger.info("All camera threads stopped")
+
+    def start_camera(self, cam_id: int) -> bool:
+            """Start a single camera"""
+            if cam_id not in self.cameras:
+                logger.error(f"Camera ID {cam_id} not found in configuration")
+                return False
+                
+            if not self.cameras[cam_id].enabled:
+                logger.warning(f"Camera ID {cam_id} is disabled in configuration")
+                return False
+                
+            # Clean up any existing thread first
+            if cam_id in self.capture_threads:
+                self._cleanup_camera_thread(cam_id)
