@@ -162,3 +162,52 @@ class FaceDatabase:
         except Exception as e:
             logger.error(f"Error retrieving face logs: {e}")
             return []
+
+    def add_known_face(self, name: str, embedding: bytes, image_path: str) -> bool:
+        """Add a known face to the database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO known_faces (name, embedding, image_path, created_at)
+                    VALUES (?, ?, ?, ?)
+                ''', (name, embedding, image_path, time.time()))
+                conn.commit()
+                return True
+        except sqlite3.IntegrityError:
+            logger.warning(f"Face with name '{name}' already exists")
+            return False
+        except Exception as e:
+            logger.error(f"Error adding known face: {e}")
+            return False
+
+    def get_known_faces(self) -> List[dict]:
+        """Retrieve all known faces from the database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT name, embedding, image_path FROM known_faces
+                ''')
+                return [{
+                    'name': row[0],
+                    'embedding': row[1],
+                    'image_path': row[2]
+                } for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Error retrieving known faces: {e}")
+            return []
+
+    def delete_known_face(self, name: str) -> bool:
+        """Delete a known face from the database"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    DELETE FROM known_faces WHERE name = ?
+                ''', (name,))
+                conn.commit()
+                return cursor.rowcount > 0
+        except Exception as e:
+            logger.error(f"Error deleting known face: {e}")
+            return False
