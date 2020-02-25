@@ -108,3 +108,39 @@ class CameraManager:
             # Clean up any existing thread first
             if cam_id in self.capture_threads:
                 self._cleanup_camera_thread(cam_id)
+                
+            # Create new queue and thread
+            self.frame_queues[cam_id] = queue.Queue(maxsize=1)
+            self.stop_event.clear()  # Clear the stop event
+            
+            self.capture_threads[cam_id] = threading.Thread(
+                target=self._capture_frames,
+                args=(cam_id,),
+                daemon=True,
+                name=f"CameraThread-{cam_id}"
+            )
+            self.capture_threads[cam_id].start()
+            logger.info(f"Started camera ID {cam_id}")
+            return True
+    
+    def stop_camera(self, cam_id: int) -> bool:
+        """Stop a single camera"""
+        if cam_id in self.capture_threads:
+            self._cleanup_camera_thread(cam_id)
+            logger.info(f"Stopped camera ID {cam_id}")
+            return True
+        return False
+
+    def _capture_frames(self, cam_id: int) -> None:
+        """Thread function to capture frames from a camera"""
+        cam_config = self.cameras[cam_id]
+        cap = None
+        
+        try:
+            # Handle different source types
+            source = int(cam_config.source) if str(cam_config.source).isdigit() else cam_config.source
+            cap = cv2.VideoCapture(source)
+            
+            if not cap.isOpened():
+                logger.error(f"Failed to open camera ID {cam_id} with source {cam_config.source}")
+                return
