@@ -144,3 +144,42 @@ class CameraManager:
             if not cap.isOpened():
                 logger.error(f"Failed to open camera ID {cam_id} with source {cam_config.source}")
                 return
+                
+            # Set camera properties
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, cam_config.width)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_config.height)
+            cap.set(cv2.CAP_PROP_FPS, cam_config.fps)
+            
+            logger.info(f"Camera ID {cam_id} opened successfully")
+            
+            while not self.stop_event.is_set():
+                ret, frame = cap.read()
+                if not ret:
+                    logger.warning(f"Camera ID {cam_id} read failed")
+                    time.sleep(1)
+                    continue
+                    
+                # Apply rotation if needed
+                if cam_config.rotate == 90:
+                    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+                elif cam_config.rotate == 180:
+                    frame = cv2.rotate(frame, cv2.ROTATE_180)
+                elif cam_config.rotate == 270:
+                    frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                
+                # Put frame in queue
+                if self.frame_queues[cam_id].full():
+                    try:
+                        self.frame_queues[cam_id].get_nowait()
+                    except queue.Empty:
+                        pass
+                        
+                self.frame_queues[cam_id].put(frame)
+                
+        except Exception as e:
+            logger.error(f"Error in camera ID {cam_id} capture thread: {e}")
+        finally:
+            if cap is not None:
+                cap.release()
+            logger.info(f"Camera ID {cam_id} capture thread exiting")
+
