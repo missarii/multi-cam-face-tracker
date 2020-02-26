@@ -183,3 +183,40 @@ class CameraManager:
                 cap.release()
             logger.info(f"Camera ID {cam_id} capture thread exiting")
 
+
+    def get_frame(self, cam_id: int) -> Optional[np.ndarray]:
+        """Get the latest frame from a camera"""
+        if cam_id not in self.frame_queues:
+            return None
+            
+        try:
+            return self.frame_queues[cam_id].get_nowait()
+        except queue.Empty:
+            return None
+
+    def get_all_frames(self) -> Dict[int, np.ndarray]:
+        """Get latest frames from all cameras"""
+        frames = {}
+        for cam_id in self.frame_queues:
+            frame = self.get_frame(cam_id)
+            if frame is not None:
+                frames[cam_id] = frame
+        return frames
+
+    def get_camera_status(self, cam_id: int) -> Dict:
+        """Get camera status information"""
+        if cam_id not in self.cameras:
+            return {}
+            
+        status = {
+            'id': cam_id,
+            'name': self.cameras[cam_id].name,
+            'running': cam_id in self.capture_threads,
+            'frame_queue_size': self.frame_queues.get(cam_id, queue.Queue()).qsize(),
+            'enabled': self.cameras[cam_id].enabled
+        }
+        return status
+
+    def get_all_camera_status(self) -> List[Dict]:
+        """Get status for all cameras"""
+        return [self.get_camera_status(cam_id) for cam_id in self.cameras]
