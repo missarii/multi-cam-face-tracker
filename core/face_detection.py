@@ -37,3 +37,57 @@ class FaceDetector:
         self.analysis_enabled = config['recognition'].get('analysis_enabled', True)
         self.model = self._load_model()
         self.known_faces: List[KnownFace] = []
+        
+    def _load_model(self) -> FaceAnalysis:
+        """Load Model insightface"""
+        try:
+            model = FaceAnalysis(
+                name='buffalo_l',
+                root='./models',
+                allowed_modules=['detection', 'recognition', 'genderage']
+            )
+            model.prepare(
+                ctx_id=0 if self.device == 'cuda' else -1,
+                det_thresh=self.detection_threshold,
+                det_size=(640, 640)
+            )
+            logger.success("Face detection model loaded successfully")
+            return model
+        except Exception as e:
+            logger.error(f"Failed to load face detection model: {e}")
+            raise
+
+    def load_known_faces(self, known_faces_dir: str) -> None:
+        """Load known faces from directory"""
+        try:
+            self.known_faces.clear()
+            known_faces_dir = Path(known_faces_dir)
+            
+            if not known_faces_dir.exists():
+                logger.warning(f"Known faces directory {known_faces_dir} does not exist")
+                return
+                
+            for face_file in known_faces_dir.glob('*.*'):
+                if face_file.suffix.lower() not in ['.jpg', '.jpeg', '.png']:
+                    continue
+                    
+                try:
+                    img = cv2.imread(str(face_file))
+                    if img is None:
+                        logger.warning(f"Could not read image {face_file}")
+                        continue
+                        
+                    faces = self.model.get(img)
+                    if len(faces) == 0:
+                        logger.warning(f"No faces found in {face_file}")
+                        continue
+                        
+                    # Use the first face found in the image
+                    face = faces[0]
+                    name = face_file.stem
+                    self.known_faces.append(KnownFace(
+                        name=name,
+                        embedding=face.embedding,
+                        image_path=str(face_file)
+                    ))
+                    logger.info(f"Loaded known face: {name}")
