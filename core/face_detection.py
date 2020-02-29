@@ -91,3 +91,42 @@ class FaceDetector:
                         image_path=str(face_file)
                     ))
                     logger.info(f"Loaded known face: {name}")
+                    
+                except Exception as e:
+                    logger.error(f"Error processing {face_file}: {e}")
+                    
+            logger.info(f"Loaded {len(self.known_faces)} known faces")
+            
+        except Exception as e:
+            logger.error(f"Error loading known faces: {e}")
+            raise
+
+    def detect_faces(self, image: np.ndarray) -> List[Face]:
+        """Detect faces in an image"""
+        try:
+            faces = self.model.get(image)
+            results = []
+            
+            for face in faces:
+                face_img = self._extract_face_image(image, face.bbox)
+
+                results.append(Face(
+                    bbox=face.bbox,
+                    kps=face.kps,
+                    det_score=face.det_score,
+                    embedding=face.embedding,
+                    age=self._get_age(face),
+                    gender=self._get_gender(face),
+                    face_img=face_img
+                ))
+            return results
+        except Exception as e:
+            logger.error(f"Error detecting faces: {e}")
+            return []
+
+    def recognize_faces(self, faces: List[Face]) -> List[Tuple[Face, Optional[KnownFace], float]]:
+        """Recognize faces against known faces database"""
+        results = []
+        
+        if not self.known_faces:
+            return [(face, None, 0.0) for face in faces]
