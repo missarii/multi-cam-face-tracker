@@ -130,3 +130,50 @@ class FaceDetector:
         
         if not self.known_faces:
             return [(face, None, 0.0) for face in faces]
+            
+        try:
+            # Get all known face embeddings
+            known_embeddings = np.array([kf.embedding for kf in self.known_faces])
+            
+            for face in faces:
+                if face.embedding is None or len(face.embedding) == 0:
+                    results.append((face, None, 0.0))
+                    continue
+                    
+                # Calculate cosine similarity between current face and all known faces
+                similarities = np.dot(known_embeddings, face.embedding) / (
+                    np.linalg.norm(known_embeddings, axis=1) * np.linalg.norm(face.embedding)
+                )
+                
+                max_idx = np.argmax(similarities)
+                max_similarity = similarities[max_idx]
+                
+                if max_similarity > self.recognition_threshold:
+                    results.append((face, self.known_faces[max_idx], max_similarity))
+                else:
+                    results.append((face, None, max_similarity))
+                    
+        except Exception as e:
+            logger.error(f"Error recognizing faces: {e}")
+            return [(face, None, 0.0) for face in faces]
+            
+        return results
+
+    def _extract_face_image(self, image: np.ndarray, bbox: np.ndarray) -> np.ndarray:
+        """Extract face region from image"""
+        x1, y1, x2, y2 = map(int, bbox)
+        x1 = max(0, x1)
+        y1 = max(0, y1)
+        x2 = min(image.shape[1], x2)
+        y2 = min(image.shape[0], y2)
+        
+        if x1 >= x2 or y1 >= y2:
+            return np.array([])
+            
+        return image[y1:y2, x1:x2].copy()
+
+    def add_known_face(self, image: np.ndarray, name: str, save_dir: str) -> bool:
+        """Add a new known face to the database"""
+        try:
+            save_dir = Path(save_dir)
+            save_dir.mkdir(parents=True, exist_ok=True)
