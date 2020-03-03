@@ -177,3 +177,46 @@ class FaceDetector:
         try:
             save_dir = Path(save_dir)
             save_dir.mkdir(parents=True, exist_ok=True)
+            
+            faces = self.detect_faces(image)
+            if not faces:
+                logger.warning("No faces found in the provided image")
+                return False
+                
+            # Use the first face found
+            face = faces[0]
+            
+            # Save the face image
+            timestamp = int(time.time())
+            face_path = save_dir / f"{name}_{timestamp}.jpg"
+            cv2.imwrite(str(face_path), image)
+            
+            # Add to known faces
+            self.known_faces.append(KnownFace(
+                name=name,
+                embedding=face.embedding,
+                image_path=str(face_path)
+            ))
+            
+            logger.info(f"Added new known face: {name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error adding known face: {e}")
+            return False
+    
+
+    def _get_age(self, face) -> Optional[int]:
+        """Extract age estimation if available"""
+        if not self.analysis_enabled:
+            return None
+        return int(face.age) if hasattr(face, 'age') else None
+    
+
+    def _get_gender(self, face) -> Optional[str]:
+        """Extract gender prediction if available"""
+        if not self.analysis_enabled:
+            return None
+        if not hasattr(face, 'sex') or face.sex is None:
+            return None
+        return 'Female' if np.argmax(face.sex) == 1 else 'Male'
