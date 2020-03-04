@@ -23,3 +23,34 @@ def draw_face_info(image: np.ndarray,
         # Draw bounding box
         color = (0, 255, 0) if name else (0, 0, 255)
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+        
+        # Create info text
+        info_text = []
+        if name:
+            info_text.append(f"Name: {name}")
+        if confidence is not None:
+            info_text.append(f"Confidence: {confidence:.2f}")
+        if age:
+            info_text.append(f"Age: {age}")
+        if gender:
+            info_text.append(f"Gender: {gender}")
+        if camera_name:
+            info_text.append(f"Camera: {camera_name}")
+        if timestamp:
+            time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+            info_text.append(f"Time: {time_str}")
+        
+        # Draw text background
+        text_y = y1 - 10 if y1 - 10 > 10 else y2 + 20
+        for i, text in enumerate(info_text):
+            text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)[0]
+            cv2.rectangle(img, 
+                         (x1, text_y - 15 - i * 20),
+                         (x1 + text_size[0] + 5, text_y - i * 20),
+                         color, -1)
+            
+            # Draw text
+            cv2.putText(img, text, 
+                       (x1 + 3, text_y - 5 - i * 20),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
+                       (0, 0, 0), 1)
