@@ -54,3 +54,26 @@ def draw_face_info(image: np.ndarray,
                        (x1 + 3, text_y - 5 - i * 20),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, 
                        (0, 0, 0), 1)
+                       
+        return img
+        
+    except Exception as e:
+        logger.error(f"Error drawing face info: {e}")
+        return image
+
+def numpy_to_pixmap(image: np.ndarray) -> 'QPixmap':
+    """Convert numpy array to QPixmap"""
+    try:
+        from PyQt5.QtGui import QImage, QPixmap
+        from PyQt5.QtCore import Qt
+        
+        if image is None:
+            return QPixmap()
+            
+        if len(image.shape) == 2:  # Grayscale
+            h, w = image.shape
+            qimg = QImage(image.data, w, h, w, QImage.Format_Grayscale8)
+        else:  # BGR
+            h, w, ch = image.shape
+            bytes_per_line = ch * w
+            qimg = QImage(image.data, w, h, bytes_per_line, QImage.Format_BGR888)
