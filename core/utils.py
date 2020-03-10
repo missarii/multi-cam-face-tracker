@@ -77,3 +77,31 @@ def numpy_to_pixmap(image: np.ndarray) -> 'QPixmap':
             h, w, ch = image.shape
             bytes_per_line = ch * w
             qimg = QImage(image.data, w, h, bytes_per_line, QImage.Format_BGR888)
+            
+        return QPixmap.fromImage(qimg).scaled(
+            w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            
+    except Exception as e:
+        logger.error(f"Error converting numpy to QPixmap: {e}")
+        return QPixmap()
+
+def resize_image(image: np.ndarray, max_width: int = 800, max_height: int = 600) -> np.ndarray:
+    """Resize image while maintaining aspect ratio"""
+    try:
+        if image is None:
+            return None
+            
+        h, w = image.shape[:2]
+        
+        if w <= max_width and h <= max_height:
+            return image
+            
+        ratio = min(max_width / w, max_height / h)
+        new_w = int(w * ratio)
+        new_h = int(h * ratio)
+        
+        return cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        
+    except Exception as e:
+        logger.error(f"Error resizing image: {e}")
+        return image
