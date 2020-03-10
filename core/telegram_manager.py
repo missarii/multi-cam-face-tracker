@@ -24,3 +24,35 @@ class TelegramManager:
         except TelegramError as e:
             logging.error(f"Failed to initialize Telegram bot: {e}")
             self.bot = None
+
+    def send_alert(self, message: str, image_path: Optional[Path] = None):
+        """Send alert to Telegram (blocking wrapper)"""
+        if not self.bot:
+            try:
+                self.loop.run_until_complete(self._initialize_bot())
+            except Exception as e:
+                logging.error(f"Telegram connection failed: {e}")
+                return
+
+        async def _send():
+            now = time.time()
+            if now - self.last_sent < self.min_interval:
+                logging.warning(f"Telegram rate limit reached ({self.min_interval}s)")
+                return
+            try:
+                if image_path and image_path.exists():
+                    with open(image_path, 'rb') as photo:
+                        await self.bot.send_photo(
+                            chat_id=self.chat_id,
+                            photo=photo,
+                            caption=message
+                        )
+                else:
+                    await self.bot.send_message(
+                        chat_id=self.chat_id,
+                        text=message
+                    )
+                self.last_sent = now
+                logging.info("Telegram alert sent successfully")
+            except TelegramError as e:
+                logging.error(f"Failed to send Telegram alert: {e}")
