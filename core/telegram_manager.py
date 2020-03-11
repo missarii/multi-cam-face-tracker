@@ -56,3 +56,33 @@ class TelegramManager:
                 logging.info("Telegram alert sent successfully")
             except TelegramError as e:
                 logging.error(f"Failed to send Telegram alert: {e}")
+
+        try:
+            self.loop.run_until_complete(_send())
+        except Exception as e:
+            logging.error(f"Telegram alert failed: {str(e)}")
+            # Fallback to saving alert locally
+            with open("failed_alerts.log", "a") as f:
+                f.write(f"{time.ctime()}: {message}\n")
+            if image_path:
+                backup_dir = Path("failed_alert_images")
+                backup_dir.mkdir(exist_ok=True)
+                new_path = backup_dir / f"alert_{int(time.time())}.jpg"
+                try:
+                    image_path.rename(new_path)
+                except Exception as e:
+                    logging.error(f"Failed to backup alert image: {e}")
+    
+    def shutdown(self):
+        """Cleanup resources"""
+        self._shutdown = True
+        self.last_sent = 0
+        if self.loop.is_running():
+            self.loop.stop()
+        
+        # Close all pending tasks
+        pending = asyncio.all_tasks(loop=self.loop)
+        for task in pending:
+            task.cancel()
+        
+        self.loop.close()
