@@ -75,3 +75,44 @@ class AlertSystem:
                 "🚨 Face detected!",
                 f"👤 Name: {face_name}"
             ]
+
+            if face.age:
+                message_lines.append(f"👶 Age: ~{face.age} years")
+            if face.gender:
+                message_lines.append(f"🚻 Gender: {face.gender}")
+                
+            message_lines.extend([
+                f"📷 Camera: {camera_name}",
+                f"🎯 Confidence: {confidence:.2%}",
+                f"⏰ Time: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+            ])
+
+            message = "\n".join(message_lines)
+            
+            self.telegram.send_alert(
+                message=message,
+                image_path=screenshot_path
+            )
+            
+        logger.info(f"Alert triggered: {face_name} detected on {camera_name} with confidence {confidence:.2f}")
+        return event
+        
+    def _play_alert_sound(self) -> None:
+        """
+        The function `_play_alert_sound` attempts to play an alert sound file using the `mixer.music`
+        module in Python, logging an error if there is an exception.
+        """
+        try:
+            if os.path.exists(self.alert_sound):
+                # playsound(self.alert_sound, block=False)
+                  mixer.music.load(self.alert_sound)
+                  mixer.music.play()
+        except Exception as e:
+            logger.error(f"Error playing alert sound: {e}")
+
+    def _capture_screenshot(self, frame: np.ndarray, camera_id: int, face_name: str, timestamp: float) -> Optional[Path]:
+        """Capture and save a screenshot of the alert"""
+        try:
+            timestamp_str = time.strftime("%Y%m%d_%H%M%S", time.localtime(timestamp))
+            filename = f"{timestamp_str}_cam{camera_id}_{face_name}.jpg"
+            filepath = self.screenshot_dir / filename
