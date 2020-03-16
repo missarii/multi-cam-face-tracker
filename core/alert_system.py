@@ -116,3 +116,42 @@ class AlertSystem:
             timestamp_str = time.strftime("%Y%m%d_%H%M%S", time.localtime(timestamp))
             filename = f"{timestamp_str}_cam{camera_id}_{face_name}.jpg"
             filepath = self.screenshot_dir / filename
+            
+            # Ensure directory exists
+            filepath.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Save the image
+            success = cv2.imwrite(str(filepath), frame)
+            if not success:
+                logger.error(f"Failed to save screenshot to {filepath}")
+                return None
+                
+            logger.info(f"Screenshot saved: {filepath}")
+            return filepath
+            
+        except Exception as e:
+            logger.error(f"Error capturing screenshot: {e}")
+            return None
+
+    def get_recent_alerts(self, limit: int = 10) -> List[AlertEvent]:
+        """Get most recent alerts"""
+        return sorted(self.alert_history, key=lambda x: x.timestamp, reverse=True)[:limit]
+
+    def clear_alerts(self) -> None:
+        """Clear alert history"""
+        self.alert_history.clear()
+
+    def enable_alerts(self, enabled: bool) -> None:
+        """Enable or disable alerts"""
+        self.alert_enabled = enabled
+        logger.info(f"Alerts {'enabled' if enabled else 'disabled'}")
+
+    def enable_screenshots(self, enabled: bool) -> None:
+        """Enable or disable screenshot capture"""
+        self.screenshot_enabled = enabled
+        logger.info(f"Screenshots {'enabled' if enabled else 'disabled'}")
+    
+    def shutdown(self):
+        """Cleanup alert system resources"""
+        if hasattr(self, 'telegram') and self.telegram:
+            self.telegram.shutdown()
