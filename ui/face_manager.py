@@ -62,3 +62,64 @@ class FaceManagerDialog(QDialog):
         self.name_input = QLineEdit()
         name_layout.addWidget(self.name_input)
         middle_layout.addLayout(name_layout)
+        
+        layout.addLayout(middle_layout)
+        
+        # Bottom section - buttons
+        button_layout = QHBoxLayout()
+        
+        self.add_btn = QPushButton("Add Face")
+        self.add_btn.clicked.connect(self.add_face)
+        button_layout.addWidget(self.add_btn)
+        
+        self.update_btn = QPushButton("Update Face")
+        self.update_btn.clicked.connect(self.update_face)
+        button_layout.addWidget(self.update_btn)
+        
+        self.delete_btn = QPushButton("Delete Face")
+        self.delete_btn.clicked.connect(self.delete_face)
+        button_layout.addWidget(self.delete_btn)
+        
+        self.import_btn = QPushButton("Import Image")
+        self.import_btn.clicked.connect(self.import_image)
+        button_layout.addWidget(self.import_btn)
+        
+        self.close_btn = QPushButton("Close")
+        self.close_btn.clicked.connect(self.close)
+        button_layout.addWidget(self.close_btn)
+        
+        layout.addLayout(button_layout)
+        
+        self.setLayout(layout)
+        
+    def load_face_list(self):
+        """
+        Load and display all face images from the known faces directory into the list widget.
+        Only image files with extensions .jpg, .jpeg, .png are considered.
+        """
+        self.face_list.clear()
+        known_faces_dir = Path(self.known_faces_dir)
+        
+        if not known_faces_dir.exists():
+            logger.warning(f"Known faces directory {known_faces_dir} does not exist")
+            return
+            
+        for face_file in known_faces_dir.glob('*.*'):
+            if face_file.suffix.lower() in ['.jpg', '.jpeg', '.png']:
+                self.face_list.addItem(face_file.stem)
+                
+    def on_face_selected(self, current, previous):
+        """
+        Triggered when a face is selected from the list.
+
+        Loads and displays the corresponding face image in the preview area
+        and updates the name input field.
+
+        Args:
+            current: The currently selected QListWidgetItem.
+            previous: The previously selected QListWidgetItem.
+        """
+        if current is None:
+            self.face_preview.clear()
+            self.name_input.clear()
+            return
