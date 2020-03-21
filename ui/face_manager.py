@@ -189,3 +189,65 @@ class FaceManagerDialog(QDialog):
         # Add the face
         success = self.face_detector.add_known_face(
             self.current_image, name, self.known_faces_dir)
+            
+        if success:
+            QMessageBox.information(self, "Success", f"Face '{name}' added successfully")
+            self.load_face_list()
+        else:
+            QMessageBox.warning(self, "Error", "Failed to add face")
+            
+    def update_face(self):
+        """
+        Update an existing face image and/or rename it.
+
+        Validates that a face is selected, name input is filled, and image is loaded.
+        Renames the file if the name has changed and saves the new image.
+        Reloads known faces in the detector and refreshes the UI.
+        """
+        current_item = self.face_list.currentItem()
+        if current_item is None:
+            QMessageBox.warning(self, "Error", "Please select a face to update")
+            return
+            
+        old_name = current_item.text()
+        new_name = self.name_input.text().strip()
+        
+        if not new_name:
+            QMessageBox.warning(self, "Error", "Please enter a name for the face")
+            return
+            
+        if self.current_image is None:
+            QMessageBox.warning(self, "Error", "Please import or select an image first")
+            return
+            
+        # Rename file if name changed
+        if old_name != new_name:
+            old_path = Path(self.known_faces_dir) / f"{old_name}{self.get_face_extension(old_name)}"
+            new_path = Path(self.known_faces_dir) / f"{new_name}{old_path.suffix}"
+            
+            if new_path.exists():
+                QMessageBox.warning(self, "Error", f"A face with name '{new_name}' already exists")
+                return
+                
+            try:
+                old_path.rename(new_path)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to rename face: {str(e)}")
+                return
+                
+        # Update the face image if it's different
+        try:
+            current_path = Path(self.known_faces_dir) / f"{new_name}{self.get_face_extension(new_name)}"
+            cv2.imwrite(str(current_path), self.current_image)
+            
+            # Reload the face in the detector
+            self.face_detector.load_known_faces(self.known_faces_dir)
+            
+            QMessageBox.information(self, "Success", "Face updated successfully")
+            self.load_face_list()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to update face: {str(e)}")
+            
+    def delete_face(self):
+        """
+        Delete the selected face image from the known faces directory.
