@@ -123,3 +123,69 @@ class FaceManagerDialog(QDialog):
             self.face_preview.clear()
             self.name_input.clear()
             return
+            
+        face_name = current.text()
+        self.name_input.setText(face_name)
+        
+        # Load and display the face image
+        face_path = Path(self.known_faces_dir) / f"{face_name}{self.get_face_extension(face_name)}"
+        if not face_path.exists():
+            QMessageBox.warning(self, "Error", f"Image file not found: {face_path}")
+            return
+            
+        try:
+            image = cv2.imread(str(face_path))
+            if image is None:
+                raise ValueError("Could not read image")
+                
+            self.current_image = image
+            pixmap = numpy_to_pixmap(image)
+            self.face_preview.setPixmap(pixmap.scaled(
+                self.face_preview.width(), self.face_preview.height(),
+                Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load image: {str(e)}")
+            logger.error(f"Error loading face image: {e}")
+            
+    def get_face_extension(self, face_name: str) -> str:
+        """
+        Search for the file extension of a face image by checking common image formats.
+
+        Args:
+            face_name (str): The base filename (without extension) of the face.
+
+        Returns:
+            str: The file extension including the dot (e.g., '.jpg'), or empty string if not found.
+        """
+        known_faces_dir = Path(self.known_faces_dir)
+        for ext in ['.jpg', '.jpeg', '.png']:
+            if (known_faces_dir / f"{face_name}{ext}").exists():
+                return ext
+        return ''
+        
+    def add_face(self):
+        """
+        Add a new face image to the known faces directory and update the face detector.
+
+        Checks if a name is entered and an image is loaded, prevents overwriting existing faces.
+        Shows relevant messages for success or errors.
+        """
+        name = self.name_input.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Error", "Please enter a name for the face")
+            return
+            
+        if self.current_image is None:
+            QMessageBox.warning(self, "Error", "Please import or select an image first")
+            return
+            
+        # Check if face already exists
+        existing_files = list(Path(self.known_faces_dir).glob(f"{name}.*"))
+        if existing_files:
+            QMessageBox.warning(self, "Error", f"A face with name '{name}' already exists")
+            return
+            
+        # Add the face
+        success = self.face_detector.add_known_face(
+            self.current_image, name, self.known_faces_dir)
