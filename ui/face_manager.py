@@ -251,3 +251,66 @@ class FaceManagerDialog(QDialog):
     def delete_face(self):
         """
         Delete the selected face image from the known faces directory.
+
+        Asks for user confirmation before deleting.
+        Refreshes the face list and reloads the face detector on success.
+        """
+        current_item = self.face_list.currentItem()
+        if current_item is None:
+            QMessageBox.warning(self, "Error", "Please select a face to delete")
+            return
+            
+        name = current_item.text()
+        
+        reply = QMessageBox.question(
+            self, "Confirm Delete",
+            f"Are you sure you want to delete face '{name}'?",
+            QMessageBox.Yes | QMessageBox.No)
+            
+        if reply == QMessageBox.No:
+            return
+            
+        # Delete the face file
+        face_path = Path(self.known_faces_dir) / f"{name}{self.get_face_extension(name)}"
+        try:
+            face_path.unlink()
+            
+            # Reload the face list and detector
+            self.face_detector.load_known_faces(self.known_faces_dir)
+            self.load_face_list()
+            
+            QMessageBox.information(self, "Success", "Face deleted successfully")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to delete face: {str(e)}")
+            
+    def import_image(self):
+        """
+        Open a file dialog to select an image file to import.
+
+        Loads the selected image, shows a preview, and fills the name input with the filename stem.
+        """
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select Image", "",
+            "Image Files (*.jpg *.jpeg *.png *.bmp)")
+            
+        if not file_path:
+            return
+            
+        try:
+            image = cv2.imread(file_path)
+            if image is None:
+                raise ValueError("Could not read image")
+                
+            self.current_image = image
+            pixmap = numpy_to_pixmap(image)
+            self.face_preview.setPixmap(pixmap.scaled(
+                self.face_preview.width(), self.face_preview.height(),
+                Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                
+            # Suggest a name based on the filename
+            suggested_name = Path(file_path).stem
+            self.name_input.setText(suggested_name)
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load image: {str(e)}")
+            logger.error(f"Error importing image: {e}")
