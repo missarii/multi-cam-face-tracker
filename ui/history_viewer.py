@@ -52,3 +52,59 @@ class HistoryViewer(QWidget):
         
         date_layout.addLayout(date_range_layout)
         filter_layout.addLayout(date_layout)
+        
+        # Camera filter
+        camera_layout = QVBoxLayout()
+        camera_layout.addWidget(QLabel("Camera:"))
+        self.camera_combo = QComboBox()
+        self.camera_combo.addItem("All Cameras", None)
+        camera_layout.addWidget(self.camera_combo)
+        filter_layout.addLayout(camera_layout)
+        
+        # Face filter
+        face_layout = QVBoxLayout()
+        face_layout.addWidget(QLabel("Face:"))
+        self.face_combo = QComboBox()
+        self.face_combo.addItem("All Faces", None)
+        face_layout.addWidget(self.face_combo)
+        filter_layout.addLayout(face_layout)
+        
+        # Refresh button
+        self.refresh_btn = QPushButton("Refresh")
+        self.refresh_btn.clicked.connect(self.refresh_history)
+        filter_layout.addWidget(self.refresh_btn)
+        
+        filter_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        main_layout.addLayout(filter_layout)
+        
+        # Splitter for history list and details
+        splitter = QSplitter(Qt.Horizontal)
+        
+        # History list
+        self.history_list = QListWidget()
+        self.history_list.currentItemChanged.connect(self.on_history_item_selected)
+        splitter.addWidget(self.history_list)
+        
+        # Details panel
+        details_frame = QFrame()
+        details_frame.setFrameShape(QFrame.StyledPanel)
+        details_layout = QVBoxLayout()
+        
+        # Image display
+        self.image_label = QLabel()
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.image_label.setMinimumSize(400, 300)
+        details_layout.addWidget(self.image_label)
+        
+        # Details text
+        self.details_label = QLabel()
+        self.details_label.setWordWrap(True)
+        details_layout.addWidget(self.details_label)
+        
+        # Screenshot button
+        self.view_screenshot_btn = QPushButton("View Screenshot")
+        self.view_screenshot_btn.clicked.connect(self.view_screenshot)
+        details_layout.addWidget(self.view_screenshot_btn)
+        
+        details_frame.setLayout(details_layout)
+        splitter.addWidget(details_frame)
