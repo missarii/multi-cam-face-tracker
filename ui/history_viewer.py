@@ -108,3 +108,57 @@ class HistoryViewer(QWidget):
         
         details_frame.setLayout(details_layout)
         splitter.addWidget(details_frame)
+        
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 2)
+        main_layout.addWidget(splitter)
+        
+        self.setLayout(main_layout)
+        
+    def load_camera_list(self):
+        """Load the list of available cameras from the configuration file into the camera filter dropdown."""
+        try:
+            with open('config/camera_config.yaml', 'r') as f:
+                import yaml
+                config = yaml.safe_load(f)
+                
+            for camera in config.get('cameras', []):
+                self.camera_combo.addItem(
+                    f"Camera {camera['id']}: {camera.get('name', '')}",
+                    camera['id']
+                )
+                
+        except Exception as e:
+            logger.error(f"Error loading camera config: {e}")
+            
+    def load_face_list(self):
+        """Load the list of known faces from the database into the face filter dropdown."""
+        try:
+            known_faces = self.database.get_known_faces()
+            for face in known_faces:
+                self.face_combo.addItem(face['name'], face['name'])
+                
+        except Exception as e:
+            logger.error(f"Error loading known faces: {e}")
+
+    def refresh_history(self):
+        """Fetch and display filtered history entries from the database in the history list."""
+        try:
+            # Get filter values
+            start_date = self.start_date.date().toPyDate()
+            end_date = self.end_date.date().toPyDate() + timedelta(days=1)  # Include entire end day
+            
+            start_timestamp = datetime.combine(start_date, datetime.min.time()).timestamp()
+            end_timestamp = datetime.combine(end_date, datetime.min.time()).timestamp()
+            
+            camera_id = self.camera_combo.currentData()
+            face_name = self.face_combo.currentData()
+            
+            # Get filtered history
+            entries = self.database.get_face_logs(
+                limit=1000,
+                camera_id=camera_id,
+                face_name=face_name,
+                start_time=start_timestamp,
+                end_time=end_timestamp
+            )
