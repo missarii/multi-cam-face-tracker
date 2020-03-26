@@ -162,3 +162,51 @@ class HistoryViewer(QWidget):
                 start_time=start_timestamp,
                 end_time=end_timestamp
             )
+            
+            # Populate list
+            self.history_list.clear()
+            for entry in entries:
+                try:
+                    # Ensure timestamp is a float
+                    timestamp = float(entry.timestamp) if isinstance(entry.timestamp, bytes) else entry.timestamp
+                    time_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+                    item_text = f"{time_str} - {entry.face_name} on {entry.camera_name}"
+                    self.history_list.addItem(item_text)
+                    self.history_list.item(self.history_list.count() - 1).setData(Qt.UserRole, entry)
+                except Exception as e:
+                    logger.error(f"Error processing history entry: {e}")
+                    continue
+                    
+        except Exception as e:
+            logger.error(f"Error refreshing history: {e}")
+
+    def on_history_item_selected(self, current, previous):
+        """Handle display of detailed information when a history list item is selected."""
+        try:
+            if current is None:
+                self.current_entry = None
+                self.image_label.clear()
+                self.details_label.clear()
+                self.view_screenshot_btn.setEnabled(False)
+                return
+                
+            entry = current.data(Qt.UserRole)
+            if not isinstance(entry, FaceLogEntry):
+                return
+                
+            self.current_entry = entry
+            
+            # Safely format the timestamp
+            try:
+                timestamp = float(entry.timestamp)
+                time_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+            except (TypeError, ValueError) as e:
+                logger.warning(f"Invalid timestamp format: {entry.timestamp}")
+                time_str = "Unknown time"
+            
+            # Safely format confidence
+            try:
+                confidence = float(entry.confidence)
+                confidence_str = f"{confidence:.2f}"
+            except (TypeError, ValueError):
+                confidence_str = "N/A"
