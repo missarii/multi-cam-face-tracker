@@ -210,3 +210,64 @@ class HistoryViewer(QWidget):
                 confidence_str = f"{confidence:.2f}"
             except (TypeError, ValueError):
                 confidence_str = "N/A"
+            
+            # Display details
+            details_text = (
+                f"<b>Time:</b> {time_str}<br>"
+                f"<b>Camera:</b> {entry.camera_name} (ID: {entry.camera_id})<br>"
+                f"<b>Face:</b> {entry.face_name}<br>"
+                f"<b>Age:</b> {entry.age if entry.age else 'N/A'}<br>"
+                f"<b>Gender:</b> {entry.gender if entry.gender else 'N/A'}<br>"
+                f"<b>Confidence:</b> {confidence_str}<br>"
+            )
+            self.details_label.setText(details_text)
+            # Enable screenshot button if available
+            self.view_screenshot_btn.setEnabled(
+                entry.screenshot_path is not None and 
+                len(str(entry.screenshot_path)) > 0
+            )
+            
+        except Exception as e:
+            logger.error(f"Error displaying history item: {e}")
+            self.details_label.setText("Error loading entry details")
+            self.view_screenshot_btn.setEnabled(False)
+
+    def view_screenshot(self):
+        """Open a dialog to display the screenshot associated with the selected history entry."""
+        if self.current_entry is None or not self.current_entry.screenshot_path:
+            QMessageBox.information(self, "No Screenshot", "No screenshot available for this entry")
+            return
+            
+        try:
+            # Check if file exists
+            screenshot_path = Path(self.current_entry.screenshot_path)
+            if not screenshot_path.exists():
+                QMessageBox.warning(self, "File Missing", f"Screenshot file not found: {screenshot_path}")
+                return
+                
+            image = cv2.imread(str(screenshot_path))
+            if image is None:
+                raise ValueError("Could not read screenshot")
+                
+            pixmap = numpy_to_pixmap(image)
+            
+            # Create a dialog to show the screenshot
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Screenshot")
+            layout = QVBoxLayout()
+            
+            image_label = QLabel()
+            image_label.setPixmap(pixmap.scaled(
+                800, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            layout.addWidget(image_label)
+            
+            close_btn = QPushButton("Close")
+            close_btn.clicked.connect(dialog.close)
+            layout.addWidget(close_btn)
+            
+            dialog.setLayout(layout)
+            dialog.exec_()
+            
+        except Exception as e:
+            logger.error(f"Error viewing screenshot: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to load screenshot: {str(e)}")
