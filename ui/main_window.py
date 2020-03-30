@@ -54,3 +54,53 @@ class MainWindow(QMainWindow):
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update)
         self.update_timer.start(30)  # ~30 FPS
+        
+        # Track last processed time per camera to limit processing
+        self.last_processed: Dict[int, float] = {}
+        
+    def init_ui(self):
+        """
+        Set up the main user interface, including tabs, layouts, and status/menu bars.
+        """
+        # Central widget and main layout
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
+        
+        # Create tab widget
+        self.tab_widget = QTabWidget()
+        main_layout.addWidget(self.tab_widget)
+        
+        # Add tabs
+        self.setup_monitor_tab()
+        self.setup_controls_tab()
+        self.setup_history_tab()
+        
+        # Status bar
+        self.status_bar = self.statusBar()
+        self.status_label = QLabel("Ready")
+        self.status_bar.addPermanentWidget(self.status_label)
+        
+        # Menu bar
+        self.setup_menu_bar()
+        
+    def setup_menu_bar(self):
+        """
+        Set up the application's menu bar with actions like exiting, opening tools, and toggling fullscreen.
+        """
+        menubar = self.menuBar()
+        
+        # File menu
+        file_menu = menubar.addMenu('File')
+        
+        exit_action = file_menu.addAction('Exit')
+        exit_action.triggered.connect(self.close)
+        
+        # Tools menu
+        tools_menu = menubar.addMenu('Tools')
+        
+        face_manager_action = tools_menu.addAction('Face Manager')
+        face_manager_action.triggered.connect(self.open_face_manager)
+        
+        alert_panel_action = tools_menu.addAction('Alert Panel')
+        alert_panel_action.triggered.connect(self.open_alert_panel)
