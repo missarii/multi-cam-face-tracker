@@ -104,3 +104,59 @@ class MainWindow(QMainWindow):
         
         alert_panel_action = tools_menu.addAction('Alert Panel')
         alert_panel_action.triggered.connect(self.open_alert_panel)
+        
+        # View menu
+        view_menu = menubar.addMenu('View')
+        
+        fullscreen_action = view_menu.addAction('Toggle Fullscreen')
+        fullscreen_action.triggered.connect(self.toggle_fullscreen)
+        
+    def setup_monitor_tab(self):
+        """
+        Set up the 'Monitor' tab which displays live camera feeds in a scrollable grid layout.
+        """
+
+        monitor_tab = QWidget()
+        self.tab_widget.addTab(monitor_tab, "Monitor")
+        
+        # Scroll area for camera feeds
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        
+        # Container for camera feeds
+        self.camera_container = QWidget()
+        self.camera_grid = QGridLayout(self.camera_container)
+        self.camera_grid.setSpacing(10)
+        
+        scroll.setWidget(self.camera_container)
+        
+        # Layout for monitor tab
+        layout = QVBoxLayout(monitor_tab)
+        layout.addWidget(scroll)
+        
+        # Add camera labels
+        self.camera_labels = {}
+        for cam_id in self.camera_manager.cameras:
+            label = QLabel()
+            label.setAlignment(Qt.AlignCenter)
+            label.setMinimumSize(400, 300)
+            self.camera_labels[cam_id] = label
+            self.camera_grid.addWidget(label, (cam_id // 2), (cam_id % 2))
+            
+    def setup_controls_tab(self):
+        """
+        Set up the 'Controls' tab, which allows users to start/stop cameras,
+        adjust recognition threshold, and modify processing intervals.
+        """
+        controls_tab = QWidget()
+        self.tab_widget.addTab(controls_tab, "Controls")
+        
+        layout = QVBoxLayout(controls_tab)
+        
+        # Camera controls
+        camera_group = QWidget()
+        camera_layout = QVBoxLayout(camera_group)
+        
+        camera_title = QLabel("Camera Controls")
+        camera_title.setAlignment(Qt.AlignCenter)
+        camera_layout.addWidget(camera_title)
