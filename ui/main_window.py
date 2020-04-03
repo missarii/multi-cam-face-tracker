@@ -160,3 +160,55 @@ class MainWindow(QMainWindow):
         camera_title = QLabel("Camera Controls")
         camera_title.setAlignment(Qt.AlignCenter)
         camera_layout.addWidget(camera_title)
+        
+        # Camera selection combo
+        self.camera_combo = QComboBox()
+        for cam_id, cam_config in self.camera_manager.cameras.items():
+            self.camera_combo.addItem(f"Camera {cam_id}: {cam_config.name}", cam_id)
+        camera_layout.addWidget(self.camera_combo)
+        
+        # Camera control buttons
+        btn_layout = QHBoxLayout()
+        
+        self.start_btn = QPushButton("Start Camera")
+        self.start_btn.clicked.connect(self.start_selected_camera)
+        btn_layout.addWidget(self.start_btn)
+        
+        self.stop_btn = QPushButton("Stop Camera")
+        self.stop_btn.clicked.connect(self.stop_selected_camera)
+        btn_layout.addWidget(self.stop_btn)
+        
+        camera_layout.addLayout(btn_layout)
+        
+        # Recognition threshold control
+        threshold_layout = QHBoxLayout()
+        threshold_label = QLabel("Recognition Threshold:")
+        threshold_layout.addWidget(threshold_label)
+        
+        self.threshold_slider = QSlider(Qt.Horizontal)
+        self.threshold_slider.setRange(50, 100)  # 0.5 to 1.0 in 0.01 increments
+        self.threshold_slider.setValue(int(self.config['recognition']['recognition_threshold'] * 100))
+        self.threshold_slider.valueChanged.connect(self.update_threshold)
+        threshold_layout.addWidget(self.threshold_slider)
+        
+        self.threshold_value = QLabel(f"{self.threshold_slider.value() / 100:.2f}")
+        threshold_layout.addWidget(self.threshold_value)
+        
+        camera_layout.addLayout(threshold_layout)
+        
+        layout.addWidget(camera_group)
+        
+        # Processing interval control
+        interval_group = QWidget()
+        interval_layout = QHBoxLayout(interval_group)
+        
+        interval_label = QLabel("Processing Interval (ms):")
+        interval_layout.addWidget(interval_label)
+        
+        self.interval_spin = QSpinBox()
+        self.interval_spin.setRange(100, 5000)
+        self.interval_spin.setValue(int(self.processing_interval * 1000))
+        self.interval_spin.valueChanged.connect(self.update_processing_interval)
+        interval_layout.addWidget(self.interval_spin)
+        
+        layout.addWidget(interval_group)
