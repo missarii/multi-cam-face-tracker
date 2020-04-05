@@ -212,3 +212,59 @@ class MainWindow(QMainWindow):
         interval_layout.addWidget(self.interval_spin)
         
         layout.addWidget(interval_group)
+        
+        # Status display
+        status_group = QWidget()
+        status_layout = QVBoxLayout(status_group)
+        
+        status_title = QLabel("System Status")
+        status_title.setAlignment(Qt.AlignCenter)
+        status_layout.addWidget(status_title)
+        
+        self.status_display = QLabel("Loading status...")
+        self.status_display.setWordWrap(True)
+        status_layout.addWidget(self.status_display)
+        
+        layout.addWidget(status_group)
+        
+    def setup_history_tab(self):
+        """
+        Set up the 'History' tab, which displays historical records of recognized faces or alerts.
+        """
+        self.history_viewer = HistoryViewer(self.database, self.config)
+        self.tab_widget.addTab(self.history_viewer, "History")
+        
+    def open_face_manager(self):
+        """
+        Open the face manager dialog to allow adding or removing known faces,
+        and reloads known faces into the face detector after closing the dialog.
+        """
+        dialog = FaceManagerDialog(self.face_detector, self.config['app']['known_faces_dir'])
+        dialog.exec_()
+        # Refresh known faces after dialog closes
+        self.face_detector.load_known_faces(self.config['app']['known_faces_dir'])
+        
+    def open_alert_panel(self):
+        """
+        Open the alert panel dialog to view and manage triggered alerts.
+        """
+        dialog = AlertPanel(self.alert_system)
+        dialog.exec_()
+        
+    def toggle_fullscreen(self):
+        """
+        Toggle the application's fullscreen mode.
+        """
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
+            
+    def start_selected_camera(self):
+        """
+        Start the camera selected from the combo box.
+        Updates the status label upon success.
+        """
+        cam_id = self.camera_combo.currentData()
+        if self.camera_manager.start_camera(cam_id):
+            self.status_label.setText(f"Started camera {cam_id}")
