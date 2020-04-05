@@ -268,3 +268,54 @@ class MainWindow(QMainWindow):
         cam_id = self.camera_combo.currentData()
         if self.camera_manager.start_camera(cam_id):
             self.status_label.setText(f"Started camera {cam_id}")
+            
+    def stop_selected_camera(self):
+        """
+        Stop the camera selected from the combo box.
+        Updates the status label upon success.
+        """
+        cam_id = self.camera_combo.currentData()
+        if self.camera_manager.stop_camera(cam_id):
+            self.status_label.setText(f"Stopped camera {cam_id}")
+            
+    def update_threshold(self, value):
+        """
+        Update the face recognition threshold used by the face detector.
+        
+        Args:
+            value (int): New threshold slider value (scaled to 0.0 - 1.0).
+        """
+        threshold = value / 100
+        self.face_detector.recognition_threshold = threshold
+        self.threshold_value.setText(f"{threshold:.2f}")
+        
+    def update_processing_interval(self, value):
+        """
+        Update the interval (in seconds) for how frequently frames should be processed.
+        
+        Args:
+            value (int): Interval in milliseconds.
+        """
+        self.processing_interval = value / 1000
+        
+    def update(self):
+        """
+        Main update loop called by the QTimer every ~30ms.
+        It fetches frames from cameras, processes them if the interval allows,
+        and displays them on the GUI. Also updates system status.
+        """
+        try:
+            # Update camera feeds
+            frames = self.camera_manager.get_all_frames()
+            
+            for cam_id, frame in frames.items():
+                if frame is None:
+                    continue
+                    
+                # Check if we should process this frame
+                current_time = time.time()
+                last_time = self.last_processed.get(cam_id, 0)
+                if current_time - last_time < self.processing_interval:
+                    # Just display the frame without processing
+                    self.display_frame(cam_id, frame)
+                    continue
