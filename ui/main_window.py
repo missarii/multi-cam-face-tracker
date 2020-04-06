@@ -426,3 +426,57 @@ class MainWindow(QMainWindow):
         """
         try:
             status_text = []
+            
+            # Camera status
+            status_text.append("=== Camera Status ===")
+            for cam_id, cam_config in self.camera_manager.cameras.items():
+                running = cam_id in self.camera_manager.capture_threads
+                status_text.append(
+                    f"Camera {cam_id} ({cam_config.name}): {'Running' if running else 'Stopped'}"
+                )
+                
+            # Face database status
+            status_text.append("\n=== Face Database ===")
+            status_text.append(f"Known faces: {len(self.face_detector.known_faces)}")
+            
+            # Alert status
+            status_text.append("\n=== Alerts ===")
+            recent_alerts = self.alert_system.get_recent_alerts(3)
+            if recent_alerts:
+                for alert in recent_alerts:
+                    time_str = time.strftime("%H:%M:%S", time.localtime(alert.timestamp))
+                    status_text.append(
+                        f"{time_str}: {alert.face_name} on {alert.camera_name} "
+                        f"(Confidence: {alert.confidence:.2f})"
+                    )
+            else:
+                status_text.append("No recent alerts")
+                
+            self.status_display.setText("\n".join(status_text))
+            
+        except Exception as e:
+            logger.error(f"Error updating status: {e}")
+            
+    def closeEvent(self, event):
+        """
+        Handle the application window close event.
+
+        Performs cleanup:
+        - Stops all camera threads
+        - Stops the UI update timer
+        - Saves configuration (if needed)
+        """
+        try:
+            # Stop all cameras
+            self.camera_manager.stop_all_cameras()
+            
+            # Stop update timer
+            self.update_timer.stop()
+            
+            # Save configuration
+            # (Add configuration saving logic here if needed)
+            
+            event.accept()
+        except Exception as e:
+            logger.error(f"Error during shutdown: {e}")
+            event.accept()
