@@ -372,3 +372,57 @@ class MainWindow(QMainWindow):
                         gender=face.gender,
                         timestamp=time.time()
                     )
+                    
+                    # Trigger alert
+                    alert_event = self.alert_system.trigger_alert(
+                        cam_id, camera_name,
+                        known_face.name, face, confidence,
+                        frame
+                    )
+                    alert_triggered = True
+                    
+                    # Log to database
+                    self.database.log_face_event(alert_event)
+                else:
+                    # Unknown face
+                    frame = draw_face_info(
+                        frame, face.bbox,
+                        name="Unknown",
+                        confidence=confidence,
+                        camera_name=camera_name,
+                        timestamp=time.time()
+                    )
+                    
+        except Exception as e:
+            logger.error(f"Error processing frame: {e}")
+            
+        return frame, alert_triggered
+        
+    def display_frame(self, cam_id: int, frame: np.ndarray):
+        """
+        Display the processed frame in the corresponding camera view.
+
+        Args:
+            cam_id (int): ID of the camera.
+            frame (np.ndarray): Frame to display.
+        """
+        try:
+            if frame is None:
+                return
+                
+            # Convert to QPixmap and display
+            pixmap = numpy_to_pixmap(frame)
+            self.camera_labels[cam_id].setPixmap(pixmap)
+            
+        except Exception as e:
+            logger.error(f"Error displaying frame: {e}")
+            
+    def update_status(self):
+        """
+        Update the application's status display with:
+        - Camera running/stopped status
+        - Known faces in the database
+        - Recent alerts (last 3)
+        """
+        try:
+            status_text = []
