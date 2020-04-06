@@ -319,3 +319,56 @@ class MainWindow(QMainWindow):
                     # Just display the frame without processing
                     self.display_frame(cam_id, frame)
                     continue
+                    
+                # Process the frame (face detection and recognition)
+                processed_frame, alert_triggered = self.process_frame(cam_id, frame)
+                
+                # Display the processed frame
+                self.display_frame(cam_id, processed_frame)
+                
+                # Update last processed time
+                self.last_processed[cam_id] = current_time
+                
+            # Update status display
+            self.update_status()
+            
+        except Exception as e:
+            logger.error(f"Error in update loop: {e}")
+            self.status_label.setText(f"Error: {str(e)}")
+            
+    def process_frame(self, cam_id: int, frame: np.ndarray) -> Tuple[np.ndarray, bool]:
+        """
+        Process a video frame for face detection and recognition.
+
+        Args:
+            cam_id (int): ID of the camera providing the frame.
+            frame (np.ndarray): The frame to process.
+
+        Returns:
+            Tuple[np.ndarray, bool]: The processed frame and a boolean indicating if an alert was triggered.
+        """
+        alert_triggered = False
+        try:
+            # Detect faces
+            faces = self.face_detector.detect_faces(frame)
+            if not faces:
+                return frame, False
+                
+            # Recognize faces
+            recognized_faces = self.face_detector.recognize_faces(faces)
+            
+            # Draw face info and check for alerts
+            for face, known_face, confidence in recognized_faces:
+                camera_name = self.camera_manager.cameras[cam_id].name
+                
+                if known_face:
+                    # Known face detected
+                    frame = draw_face_info(
+                        frame, face.bbox,
+                        name=known_face.name,
+                        confidence=confidence,
+                        camera_name=camera_name,
+                        age=face.age,
+                        gender=face.gender,
+                        timestamp=time.time()
+                    )
