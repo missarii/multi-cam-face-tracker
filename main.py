@@ -48,3 +48,45 @@ def load_config(config_path: str) -> dict:
     try:
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
+            
+        # Ensure required directories exist
+        Path(config['app']['screenshot_dir']).mkdir(parents=True, exist_ok=True)
+        Path(config['app']['known_faces_dir']).mkdir(parents=True, exist_ok=True)
+        Path(config['app']['log_dir']).mkdir(parents=True, exist_ok=True)
+        
+        return config
+    except Exception as e:
+        logger.error(f"Failed to load config: {e}")
+        raise
+
+def setup_logging(log_dir: str):
+    """
+    Initialize application logging using loguru.
+
+    Args:
+        log_dir (str): Directory where log files should be stored.
+
+    Behavior:
+        - Creates rotating log files for general logs and error logs.
+        - Retains log history for maintenance and debugging.
+
+    Log Files:
+        - app.log (INFO level, rotated every 10MB, kept for 7 days)
+        - error.log (ERROR level, rotated every 10MB, kept for 30 days)
+
+    Usage:
+        setup_logging(config['app']['log_dir'])
+    """
+    logger.add(
+        f"{log_dir}/app.log",
+        rotation="10 MB",
+        retention="7 days",
+        level="INFO"
+    )
+    logger.add(
+        f"{log_dir}/error.log",
+        rotation="10 MB",
+        retention="30 days",
+        level="ERROR"
+    )
+
