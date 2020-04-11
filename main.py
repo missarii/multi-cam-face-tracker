@@ -139,3 +139,50 @@ def main():
     try:
         # Load configuration
         config = load_config('config/config.yaml')
+        
+        # Setup logging
+        setup_logging(config['app']['log_dir'])
+        
+        # Create and run application
+        app = QApplication(sys.argv)
+
+        splash = show_splash_screen(config)
+        splash.show()
+
+        app.processEvents()
+
+        window = MainWindow(config)
+        
+        def show_ai_loading():
+            splash.showMessage(
+                "Loading AI Models...",
+                Qt.AlignBottom | Qt.AlignCenter,
+                Qt.white
+            )
+            QApplication.processEvents()
+            
+            # Setup final close timer
+            QTimer.singleShot(1500, lambda: splash.finish(window))
+        
+        # Initial delay before showing AI message
+        QTimer.singleShot(2000, show_ai_loading)
+
+        QTimer.singleShot(3500, lambda: window.show())
+
+
+        logger.info("Application started successfully")
+        def on_close():
+            window.camera_manager.stop_all_cameras()
+            window.alert_system.shutdown()
+            app.quit()
+            
+        app.aboutToQuit.connect(on_close)
+
+        sys.exit(app.exec_())
+        
+    except Exception as e:
+        logger.critical(f"Application failed to start: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
