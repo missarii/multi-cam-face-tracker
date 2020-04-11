@@ -90,3 +90,52 @@ def setup_logging(log_dir: str):
         level="ERROR"
     )
 
+
+def show_splash_screen(config: dict) -> QSplashScreen:
+    """Create and display splash screen with logo"""
+    try:
+        # Get logo path from config with fallback
+        logo_path = config.get('app', {}).get('logo', 'assets/logo.png')
+        
+        # Verify logo exists
+        if not Path(logo_path).exists():
+            raise FileNotFoundError(f"Logo file not found: {logo_path}")
+        
+        splash_pix = QPixmap(logo_path)
+        if splash_pix.isNull():
+            raise ValueError(f"Invalid logo image: {logo_path}")
+            
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.setMask(splash_pix.mask())
+
+        splash.showMessage(
+            "Initializing Face Tracker...",
+            Qt.AlignBottom | Qt.AlignCenter,
+            Qt.white
+        )
+        QApplication.processEvents()  # Force UI update
+        
+        return splash
+        
+    except Exception as e:
+        print(f"Error loading splash screen: {e}")
+        # Fallback to blank splash if logo fails
+        return QSplashScreen(QPixmap(800, 400))
+
+
+def main():
+    """
+    Main entry point of the Multi-Camera Face Tracker System.
+
+    Behavior:
+        - Loads application configuration from YAML.
+        - Sets up logging to file.
+        - Initializes and launches the PyQt5 user interface.
+        - Starts the event loop for the desktop application.
+
+    Error Handling:
+        - Logs critical error and exits gracefully if any part of initialization fails.
+    """
+    try:
+        # Load configuration
+        config = load_config('config/config.yaml')
