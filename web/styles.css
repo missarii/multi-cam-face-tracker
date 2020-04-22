@@ -229,3 +229,85 @@ body {
     opacity: 0;
     animation: fadeInUp 0.8s ease 0.2s forwards;
 }
+
+.hero-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 4rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.4s forwards;
+}
+
+.hero-image {
+    max-width: 80rem;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeInUp 1s ease 0.6s forwards;
+}
+
+.app-window {
+    position: relative;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    background: rgba(39, 39, 42, 0.5);
+    padding: 0.25rem;
+    box-shadow: var(--shadow-xl);
+}
+
+.app-window::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent, rgba(236, 72, 153, 0.1));
+}
+
+.window-header {
+    position: relative;
+    height: 2.5rem;
+    background: linear-gradient(to bottom, rgba(39, 39, 42, 1), transparent);
+    border-radius: 0.5rem 0.5rem 0 0;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+}
+
+.window-controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.control {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+}
+
+.control.red { background: #ef4444; }
+.control.yellow { background: #eab308; }
+.control.green { background: #22c55e; }
+
+.app-screenshot {
+    width: 100%;
+    border-radius: 0 0 0.5rem 0.5rem;
+    object-fit: cover;
+}
+
+/* Features Section */
+.features {
+    padding: 5rem 0;
+    background: var(--bg-secondary);
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
