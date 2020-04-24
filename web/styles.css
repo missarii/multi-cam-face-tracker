@@ -464,3 +464,80 @@ body {
     width: 100%;
     object-fit: cover;
 }
+
+.glow {
+    position: absolute;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    filter: blur(2rem);
+    z-index: -1;
+}
+
+.glow-1 {
+    bottom: -1rem;
+    right: -1rem;
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.glow-2 {
+    top: -1rem;
+    left: -1rem;
+    background: rgba(236, 72, 153, 0.2);
+}
+
+/* CTA Section */
+.cta {
+    padding: 5rem 0;
+    background: linear-gradient(to bottom, var(--bg-secondary), var(--bg-primary));
+}
+
+.cta-card {
+    position: relative;
+    max-width: 48rem;
+    margin: 0 auto;
+    background: rgba(39, 39, 42, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    backdrop-filter: blur(12px);
+}
+
+.cta-glow {
+    position: absolute;
+    top: -2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5rem;
+    height: 5rem;
+    background: var(--gradient-blue-pink);
+    border-radius: 50%;
+    opacity: 0.2;
+    filter: blur(3rem);
+}
+
+.cta-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.cta-description {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.cta-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Footer */
+.footer {
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    padding: 3rem 0;
+}
