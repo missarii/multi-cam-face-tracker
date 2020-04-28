@@ -136,3 +136,50 @@ window.addEventListener('scroll', () => {
         parallax.style.transform = `translateY(${speed}px)`;
     }
 });
+
+// Add typing effect to hero title (optional)
+function typeWriter(element, text, speed = 100) {
+    let i = 0;
+    element.innerHTML = '';
+    
+    function type() {
+        if (i < text.length) {
+            element.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
+    }
+    
+    type();
+}
+
+// Initialize typing effect when page loads
+window.addEventListener('load', () => {
+    const heroTitle = document.querySelector('.hero-title-gradient');
+    if (heroTitle) {
+        const originalText = heroTitle.textContent;
+        // Uncomment the line below to enable typing effect
+        // typeWriter(heroTitle, originalText, 50);
+    }
+});
+
+// Add scroll progress indicator
+const scrollProgress = document.createElement('div');
+scrollProgress.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(135deg, #3b82f6, #ec4899);
+    z-index: 9999;
+    transition: width 0.1s ease;
+`;
+document.body.appendChild(scrollProgress);
+
+window.addEventListener('scroll', () => {
+    const scrollTop = window.pageYOffset;
+    const docHeight = document.body.offsetHeight - window.innerHeight;
+    const scrollPercent = (scrollTop / docHeight) * 100;
+    scrollProgress.style.width = scrollPercent + '%';
+});
